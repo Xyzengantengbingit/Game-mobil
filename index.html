@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game mobil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #87CEEB;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: linear-gradient(to top, #654321 30%, #87CEEB);
+      border: 4px solid #333;
+      box-shadow: 0 0 20px #555;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 5px #000;
+    }
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      background: #00e676;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 0 10px #00e676;
+    }
+    .btn:active {
+      background: #00c853;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Score: 0</div>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+  <!-- Tombol Mobile -->
+  <div class="controls">
+    <button class="btn" ontouchstart="up=true" ontouchend="up=false">↑</button>
+    <button class="btn" ontouchstart="down=true" ontouchend="down=false">↓</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreBoard = document.getElementById("score");
+
+    const player = {
+      x: 100,
+      y: canvas.height / 2 - 20,
+      width: 40,
+      height: 30,
+      color: "#FFD700",
+      speed: 4
+    };
+
+    let obstacles = [];
+    let keys = {};
+    let score = 0;
+    let gameSpeed = 3;
+
+    let up = false;
+    let down = false;
+
+    document.addEventListener("keydown", e => keys[e.code] = true);
+    document.addEventListener("keyup", e => keys[e.code] = false);
+
+    function drawPlayer() {
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.beginPath();
+      ctx.arc(player.x + 10, player.y + player.height, 8, 0, Math.PI * 2);
+      ctx.arc(player.x + 30, player.y + player.height, 8, 0, Math.PI * 2);
+      ctx.fillStyle = "#000";
+      ctx.fill();
+    }
+
+    function drawObstacles() {
+      obstacles.forEach((obs, index) => {
+        obs.x -= gameSpeed;
+        ctx.fillStyle = "#FF3D00";
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        // Check collision
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          alert("Game Over! Skor kamu: " + score);
+          document.location.reload();
+        }
+
+        // Remove off-screen
+        if (obs.x + obs.width < 0) {
+          obstacles.splice(index, 1);
+        }
+      });
+    }
+
+    function spawnObstacle() {
+      if (Math.random() < 0.02) {
+        const height = 30 + Math.random() * 50;
+        const y = Math.random() * (canvas.height - height - 50);
+        obstacles.push({
+          x: canvas.width,
+          y: y,
+          width: 20,
+          height: height
+        });
+      }
+    }
+
+    function updatePlayer() {
+      if (keys["ArrowUp"] || up) player.y -= player.speed;
+      if (keys["ArrowDown"] || down) player.y += player.speed;
+
+      // Batas layar
+      if (player.y < 0) player.y = 0;
+      if (player.y > canvas.height - player.height) player.y = canvas.height - player.height;
+    }
+
+    function updateGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      updatePlayer();
+      drawPlayer();
+      spawnObstacle();
+      drawObstacles();
+
+      // Update skor
+      score += 1;
+      scoreBoard.textContent = "Score: " + score;
+
+      requestAnimationFrame(updateGame);
+    }
+
+    updateGame();
+  </script>
+</body>
+</html>
